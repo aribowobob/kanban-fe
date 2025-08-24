@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getCookie } from "cookies-next";
 import { useUserStore } from "@/lib/store/user-store";
+import { useIsClient } from "@/lib/hooks/use-is-client";
 import { authApi } from "@/lib/api/auth";
 
 interface AuthProviderProps {
@@ -12,27 +13,32 @@ interface AuthProviderProps {
 
 export default function AuthProvider({ children }: AuthProviderProps) {
   const { setUser, setLoading, resetUser } = useUserStore();
+  const isClient = useIsClient();
 
-  const token = getCookie("token");
+  const token = isClient ? getCookie("token") : null;
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["currentUser"],
     queryFn: authApi.getCurrentUser,
-    enabled: !!token,
+    enabled: !!token && isClient,
     retry: false,
   });
 
   useEffect(() => {
-    setLoading(isLoading);
-  }, [isLoading, setLoading]);
+    if (isClient) {
+      setLoading(isLoading);
+    }
+  }, [isLoading, setLoading, isClient]);
 
   useEffect(() => {
-    if (data) {
-      setUser(data);
-    } else if (isError || !token) {
-      resetUser();
+    if (isClient) {
+      if (data) {
+        setUser(data.data);
+      } else if (isError || !token) {
+        resetUser();
+      }
     }
-  }, [data, isError, token, setUser, resetUser]);
+  }, [data, isError, token, setUser, resetUser, isClient]);
 
   return <>{children}</>;
 }
