@@ -1,18 +1,13 @@
 "use client";
 
+import { use } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   Breadcrumb,
@@ -24,6 +19,7 @@ import {
 } from "@/components/ui/breadcrumb";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -34,11 +30,13 @@ import {
 import { taskApi } from "@/lib/api/tasks";
 import { TeamType } from "@/lib/types/task";
 import { handleApiError } from "@/lib/api/api-client";
+import { Link as LinkIcon } from "lucide-react";
+import Link from "next/link";
 
 interface TaskDetailPageProps {
-  params: {
+  params: Promise<{
     taskId: string;
-  };
+  }>;
 }
 
 const teamColors: Record<TeamType, string> = {
@@ -56,7 +54,8 @@ const statusLabels = {
 export default function TaskDetailPage({ params }: TaskDetailPageProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const taskId = parseInt(params.taskId);
+  const { taskId: taskIdParam } = use(params);
+  const taskId = parseInt(taskIdParam);
 
   const {
     data: taskData,
@@ -73,7 +72,7 @@ export default function TaskDetailPage({ params }: TaskDetailPageProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
       toast.success("Task deleted successfully!");
-      router.push("/dashboard");
+      router.back();
     },
     onError: (error) => {
       toast.error(handleApiError(error));
@@ -107,118 +106,111 @@ export default function TaskDetailPage({ params }: TaskDetailPageProps) {
   const task = taskData.data;
 
   return (
-    <div className="p-6">
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-6">
-          <Breadcrumb>
-            <BreadcrumbList>
-              <BreadcrumbItem>
-                <BreadcrumbLink href="/dashboard">Dashboard</BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                <BreadcrumbPage>{task.name}</BreadcrumbPage>
-              </BreadcrumbItem>
-            </BreadcrumbList>
-          </Breadcrumb>
-        </div>
+    <div className="py-6 px-4 container mx-auto">
+      <h1 className="text-2xl font-bold text-gray-900 block mb-6 leading-12">
+        Task Detail
+      </h1>
+      <div className="mb-4">
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink href="/dashboard">Dashboard</BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>{task.name}</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+      </div>
 
-        <Card>
-          <CardHeader>
-            <div className="flex justify-between items-start">
-              <div>
-                <CardTitle className="text-2xl mb-2">{task.name}</CardTitle>
-                <CardDescription>Task details and information</CardDescription>
-              </div>
-              <div className="flex space-x-2">
-                <Button onClick={handleEdit}>Edit Task</Button>
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button variant="destructive">Delete</Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Are you sure?</DialogTitle>
-                      <DialogDescription>
-                        This action cannot be undone. This will permanently
-                        delete the task.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <DialogFooter>
-                      <Button variant="outline">Cancel</Button>
-                      <Button
-                        variant="destructive"
-                        onClick={handleDelete}
-                        disabled={deleteTaskMutation.isPending}
-                      >
-                        {deleteTaskMutation.isPending
-                          ? "Deleting..."
-                          : "Delete"}
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
+      <Card className="gap-4 shadow-none">
+        <CardHeader>
+          <CardTitle className="text-2xl">{task.name}</CardTitle>
+        </CardHeader>
+        <CardContent className="md:flex md:gap-4 lg:gap-8">
+          <div className="grow flex flex-col gap-4">
             {task.description && (
               <div>
-                <h3 className="text-lg font-semibold mb-2">Description</h3>
-                <p className="text-gray-700 whitespace-pre-wrap">
+                <p className="text-muted-foreground whitespace-pre-wrap">
                   {task.description}
                 </p>
               </div>
             )}
 
             {task.teams.length > 0 && (
-              <div>
-                <h3 className="text-lg font-semibold mb-2">Assigned Teams</h3>
-                <div className="flex flex-wrap gap-2">
-                  {task.teams.map((team) => (
-                    <Badge key={team} className={teamColors[team]}>
-                      {team}
-                    </Badge>
-                  ))}
-                </div>
+              <div className="flex flex-wrap gap-2">
+                {task.teams.map((team) => (
+                  <Badge key={team} className={teamColors[team]}>
+                    {team}
+                  </Badge>
+                ))}
               </div>
             )}
 
-            <div>
-              <h3 className="text-lg font-semibold mb-2">Status</h3>
-              <Badge variant="outline" className="text-sm">
-                {statusLabels[task.status]}
-              </Badge>
-            </div>
+            <p className="text-sm text-muted-foreground">
+              {`Status: ${statusLabels[task.status]}`}
+            </p>
 
             {task.external_link && (
-              <div>
-                <h3 className="text-lg font-semibold mb-2">External Link</h3>
-                <a
+              <div className="flex gap-2 items-center">
+                <LinkIcon className="size-4 text-muted-foreground" />
+                <Link
                   href={task.external_link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-600 hover:underline"
+                  className="text-blue-600 hover:underline break-all"
                 >
                   {task.external_link}
-                </a>
+                </Link>
               </div>
             )}
+          </div>
 
-            <div className="border-t pt-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
-                <div>
-                  <span className="font-medium">Created at:</span>{" "}
-                  {format(new Date(task.created_at), "d MMMM yyyy hh:mm a")}
-                </div>
-                <div>
-                  <span className="font-medium">Updated at:</span>{" "}
-                  {format(new Date(task.updated_at), "d MMMM yyyy hh:mm a")}
-                </div>
-              </div>
+          <div className="shrink-0 text-muted-foreground text-sm mt-6 md:mt-0">
+            <p className="font-semibold">Info</p>
+            <div>
+              <span className="font-medium">Created at:</span>{" "}
+              {format(new Date(task.created_at), "d MMMM yyyy hh:mm a")}
             </div>
-          </CardContent>
-        </Card>
+            <div>
+              <span className="font-medium">Updated at:</span>{" "}
+              {format(new Date(task.updated_at), "d MMMM yyyy hh:mm a")}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="mt-6 flex gap-4 justify-end items-center">
+        <Button onClick={handleEdit}>Edit Task</Button>
+        <span>or</span>
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button variant="link" className="text-destructive px-0">
+              Delete
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Delete Task</DialogTitle>
+              <DialogDescription>
+                Are you sure want to delete this task?
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button variant="outline">Cancel</Button>
+              </DialogClose>
+              <Button
+                variant="destructive"
+                onClick={handleDelete}
+                disabled={deleteTaskMutation.isPending}
+              >
+                {deleteTaskMutation.isPending ? "Deleting..." : "Yes, delete"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

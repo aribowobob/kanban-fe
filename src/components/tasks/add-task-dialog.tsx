@@ -182,7 +182,7 @@ export default function AddTaskDialog() {
               value={watch("status")}
               onValueChange={(value: TaskStatus) => setValue("status", value)}
             >
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select status" />
               </SelectTrigger>
               <SelectContent>
