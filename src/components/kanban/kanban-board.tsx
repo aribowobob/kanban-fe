@@ -30,7 +30,7 @@ export default function KanbanBoard({ tasks }: KanbanBoardProps) {
             </h2>
             <div className="space-y-4 mt-4">
               {columnTasks.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
+                <div className="text-center py-8 text-muted-foreground">
                   No tasks in this column
                 </div>
               ) : (

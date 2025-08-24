@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -113,9 +114,11 @@ export default function AddTaskDialog() {
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Add a Task</DialogTitle>
-          <DialogDescription>
-            Create a new task for your team. Fill in the details below.
-          </DialogDescription>
+          <VisuallyHidden asChild>
+            <DialogDescription>
+              Create a new task for your team. Fill in the details below.
+            </DialogDescription>
+          </VisuallyHidden>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
@@ -152,7 +155,9 @@ export default function AddTaskDialog() {
           </div>
 
           <div className="space-y-2">
-            <Label>Team Assignment</Label>
+            <p className="text-sm font-medium leading-none select-none">
+              Team Assignment
+            </p>
             <div className="space-y-2">
               {teams.map((team) => (
                 <div key={team} className="flex items-center space-x-2">

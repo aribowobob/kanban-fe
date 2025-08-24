@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Task, TeamType } from "@/lib/types/task";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Link as LinkIcon } from "lucide-react";
 
 interface TaskCardProps {
   task: Task;
@@ -17,35 +18,58 @@ const teamColors: Record<TeamType, string> = {
 
 export default function TaskCard({ task }: TaskCardProps) {
   return (
-    <Card className="cursor-pointer shadow-none hover:shadow-sm transition-shadow rounded-lg">
-      <Link href={`/dashboard/${task.id}`} className="block">
-        <CardHeader className="gap-0">
-          <CardTitle className="text-lg font-bold line-clamp-2">
+    <Card className="shadow-none hover:shadow-sm transition-shadow rounded-lg gap-0">
+      <CardHeader className="gap-0">
+        <CardTitle className="text-lg font-bold line-clamp-2">
+          <Link
+            href={`/dashboard/${task.id}`}
+            className="block hover:underline"
+          >
             {task.name}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="pt-0 gap-3 flex flex-col">
-          {task.description && (
+          </Link>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="pt-0 gap-4 flex flex-col">
+        {task.description && (
+          <Link href={`/dashboard/${task.id}`} className="block">
             <p className="text-sm text-gray-500 line-clamp-2">
               {task.description}
             </p>
-          )}
+          </Link>
+        )}
 
-          {task.teams.length > 0 && (
-            <div className="flex flex-wrap gap-1">
-              {task.teams.map((team) => (
-                <Badge
-                  key={team}
-                  variant="secondary"
-                  className={`text-xs ${teamColors[team]}`}
+        {(task.external_link || task.attachments.length > 0) && (
+          <div className="flex items-center gap-2">
+            {task.external_link && (
+              <div className="flex items-center gap-2 flex-1">
+                <LinkIcon className="w-4 h-4 text-gray-500" />
+                <Link
+                  href={task.external_link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-blue-500 hover:underline truncate"
                 >
-                  {team}
-                </Badge>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Link>
+                  {task.external_link}
+                </Link>
+              </div>
+            )}
+          </div>
+        )}
+
+        {task.teams.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {task.teams.map((team) => (
+              <Badge
+                key={team}
+                variant="secondary"
+                className={`text-xs ${teamColors[team]}`}
+              >
+                {team}
+              </Badge>
+            ))}
+          </div>
+        )}
+      </CardContent>
     </Card>
   );
 }
