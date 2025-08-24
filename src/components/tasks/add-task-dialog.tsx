@@ -66,6 +66,7 @@ export default function AddTaskDialog() {
           </VisuallyHidden>
         </DialogHeader>
         <TaskForm
+          key={`add-task-${open}`}
           initialData={null}
           onSubmit={handleSubmit}
           isSubmitting={createTaskMutation.isPending}

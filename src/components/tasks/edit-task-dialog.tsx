@@ -73,6 +73,7 @@ export default function EditTaskDialog({
           </VisuallyHidden>
         </DialogHeader>
         <TaskForm
+          key={`edit-task-${task.id}-${open}`}
           initialData={task}
           onSubmit={handleSubmit}
           isSubmitting={updateTaskMutation.isPending}

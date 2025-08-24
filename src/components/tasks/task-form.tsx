@@ -52,6 +52,7 @@ export default function TaskForm({
   onCancel,
 }: TaskFormProps) {
   const [selectedTeams, setSelectedTeams] = useState<TeamType[]>([]);
+  const [selectedStatus, setSelectedStatus] = useState<TaskStatus>("TO_DO");
 
   const {
     register,
@@ -59,7 +60,6 @@ export default function TaskForm({
     formState: { errors },
     reset,
     setValue,
-    watch,
   } = useForm<TaskFormData>({
     resolver: zodResolver(taskSchema),
     defaultValues: {
@@ -74,12 +74,19 @@ export default function TaskForm({
   // Set initial values when initialData changes
   useEffect(() => {
     if (initialData) {
-      setValue("name", initialData.name);
-      setValue("description", initialData.description || "");
-      setValue("status", initialData.status);
-      setValue("teams", initialData.teams);
-      setValue("external_link", initialData.external_link || "");
-      setSelectedTeams(initialData.teams);
+      // Use setTimeout to ensure proper timing with form state updates
+      setTimeout(() => {
+        const formData = {
+          name: initialData.name,
+          description: initialData.description || "",
+          status: initialData.status,
+          teams: initialData.teams,
+          external_link: initialData.external_link || "",
+        };
+        reset(formData);
+        setSelectedTeams(initialData.teams);
+        setSelectedStatus(initialData.status);
+      }, 0);
     } else {
       reset({
         status: "TO_DO",
@@ -89,8 +96,14 @@ export default function TaskForm({
         external_link: "",
       });
       setSelectedTeams([]);
+      setSelectedStatus("TO_DO");
     }
-  }, [initialData, setValue, reset]);
+  }, [initialData, reset]);
+
+  const handleStatusChange = (value: TaskStatus) => {
+    setSelectedStatus(value);
+    setValue("status", value);
+  };
 
   const handleTeamChange = (team: TeamType, checked: boolean) => {
     let newTeams: TeamType[];
@@ -160,10 +173,7 @@ export default function TaskForm({
 
       <div className="space-y-2">
         <Label htmlFor="status">Status</Label>
-        <Select
-          value={watch("status")}
-          onValueChange={(value: TaskStatus) => setValue("status", value)}
-        >
+        <Select value={selectedStatus} onValueChange={handleStatusChange}>
           <SelectTrigger className="w-full">
             <SelectValue placeholder="Select status" />
           </SelectTrigger>
