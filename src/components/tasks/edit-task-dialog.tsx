@@ -5,7 +5,6 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
-import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -16,18 +15,28 @@ import {
 } from "@/components/ui/dialog";
 import TaskForm, { TaskFormData } from "./task-form";
 import { taskApi } from "@/lib/api/tasks";
-import { CreateTaskRequest } from "@/lib/types/task";
+import { Task, UpdateTaskRequest } from "@/lib/types/task";
 import { handleApiError } from "@/lib/api/api-client";
 
-export default function AddTaskDialog() {
+interface EditTaskDialogProps {
+  task: Task;
+  children: React.ReactNode;
+}
+
+export default function EditTaskDialog({
+  task,
+  children,
+}: EditTaskDialogProps) {
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
 
-  const createTaskMutation = useMutation({
-    mutationFn: taskApi.createTask,
+  const updateTaskMutation = useMutation({
+    mutationFn: (data: { id: number; payload: UpdateTaskRequest }) =>
+      taskApi.updateTask(data.id, data.payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
-      toast.success("Task created successfully!");
+      queryClient.invalidateQueries({ queryKey: ["task", task.id] });
+      toast.success("Task updated successfully!");
       setOpen(false);
     },
     onError: (error) => {
@@ -36,7 +45,7 @@ export default function AddTaskDialog() {
   });
 
   const handleSubmit = (data: TaskFormData) => {
-    const payload: CreateTaskRequest = {
+    const payload: UpdateTaskRequest = {
       name: data.name,
       description: data.description || "",
       status: data.status,
@@ -44,7 +53,7 @@ export default function AddTaskDialog() {
       external_link: data.external_link || undefined,
     };
 
-    createTaskMutation.mutate(payload);
+    updateTaskMutation.mutate({ id: task.id, payload });
   };
 
   const handleCancel = () => {
@@ -53,23 +62,21 @@ export default function AddTaskDialog() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button size="lg">Add a task</Button>
-      </DialogTrigger>
+      <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Add a Task</DialogTitle>
+          <DialogTitle>Edit Task</DialogTitle>
           <VisuallyHidden asChild>
             <DialogDescription>
-              Create a new task for your team. Fill in the details below.
+              Edit the task details. Modify the information below.
             </DialogDescription>
           </VisuallyHidden>
         </DialogHeader>
         <TaskForm
-          initialData={null}
+          initialData={task}
           onSubmit={handleSubmit}
-          isSubmitting={createTaskMutation.isPending}
-          submitButtonText="Create Task"
+          isSubmitting={updateTaskMutation.isPending}
+          submitButtonText="Update Task"
           onCancel={handleCancel}
         />
       </DialogContent>

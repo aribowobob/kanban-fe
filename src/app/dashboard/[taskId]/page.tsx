@@ -32,6 +32,7 @@ import { TeamType } from "@/lib/types/task";
 import { handleApiError } from "@/lib/api/api-client";
 import { Link as LinkIcon } from "lucide-react";
 import Link from "next/link";
+import EditTaskDialog from "@/components/tasks/edit-task-dialog";
 
 interface TaskDetailPageProps {
   params: Promise<{
@@ -81,10 +82,6 @@ export default function TaskDetailPage({ params }: TaskDetailPageProps) {
 
   const handleDelete = () => {
     deleteTaskMutation.mutate(taskId);
-  };
-
-  const handleEdit = () => {
-    router.push(`/dashboard/${taskId}/edit`);
   };
 
   if (isLoading) {
@@ -182,7 +179,9 @@ export default function TaskDetailPage({ params }: TaskDetailPageProps) {
       </Card>
 
       <div className="mt-6 flex gap-4 justify-end items-center">
-        <Button onClick={handleEdit}>Edit Task</Button>
+        <EditTaskDialog task={task}>
+          <Button>Edit Task</Button>
+        </EditTaskDialog>
         <span>or</span>
         <Dialog>
           <DialogTrigger asChild>
