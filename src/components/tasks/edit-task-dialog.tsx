@@ -35,7 +35,7 @@ export default function EditTaskDialog({
       taskApi.updateTask(data.id, data.payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
-      queryClient.invalidateQueries({ queryKey: ["task", task.id] });
+      queryClient.resetQueries({ queryKey: ["task", task.id] });
       toast.success("Task updated successfully!");
       setOpen(false);
     },

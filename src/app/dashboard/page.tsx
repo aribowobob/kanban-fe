@@ -4,7 +4,9 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import KanbanBoard from "@/components/kanban/kanban-board";
+import KanbanBoardSkeleton from "@/components/kanban/kanban-board-skeleton";
 import AddTaskDialog from "@/components/tasks/add-task-dialog";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useUserStore } from "@/lib/store/user-store";
 import { useIsClient } from "@/lib/hooks/use-is-client";
 import { taskApi } from "@/lib/api/tasks";
@@ -29,8 +31,17 @@ export default function DashboardPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div>Loading...</div>
+      <div className="py-6 px-4 container mx-auto">
+        <div className="mb-6 md:mb-8">
+          <div className="flex justify-between gap-4 items-center">
+            <div>
+              <Skeleton className="h-8 w-48" />
+            </div>
+            <Skeleton className="h-10 w-24" />
+          </div>
+        </div>
+
+        <KanbanBoardSkeleton />
       </div>
     );
   }

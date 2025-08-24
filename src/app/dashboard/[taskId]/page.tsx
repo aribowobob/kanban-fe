@@ -33,6 +33,7 @@ import { handleApiError } from "@/lib/api/api-client";
 import { Link as LinkIcon } from "lucide-react";
 import Link from "next/link";
 import EditTaskDialog from "@/components/tasks/edit-task-dialog";
+import TaskDetailSkeleton from "@/components/tasks/task-detail-skeleton";
 
 interface TaskDetailPageProps {
   params: Promise<{
@@ -71,7 +72,7 @@ export default function TaskDetailPage({ params }: TaskDetailPageProps) {
   const deleteTaskMutation = useMutation({
     mutationFn: taskApi.deleteTask,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.resetQueries({ queryKey: ["tasks"] });
       toast.success("Task deleted successfully!");
       router.back();
     },
@@ -85,11 +86,7 @@ export default function TaskDetailPage({ params }: TaskDetailPageProps) {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div>Loading task...</div>
-      </div>
-    );
+    return <TaskDetailSkeleton />;
   }
 
   if (error || !taskData) {

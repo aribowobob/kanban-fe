@@ -26,7 +26,7 @@ export default function AddTaskDialog() {
   const createTaskMutation = useMutation({
     mutationFn: taskApi.createTask,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.resetQueries({ queryKey: ["tasks"] });
       toast.success("Task created successfully!");
       setOpen(false);
     },
