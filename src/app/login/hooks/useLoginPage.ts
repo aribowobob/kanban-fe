@@ -19,7 +19,7 @@ type LoginForm = z.infer<typeof loginSchema>;
 
 export const useLoginPage = () => {
   const { replace } = useRouter();
-  const { setUserDirect } = useUserStore();
+  const { setUser } = useUserStore();
 
   const {
     register,
@@ -39,7 +39,7 @@ export const useLoginPage = () => {
       });
 
       // Set user in store
-      setUserDirect(data.data.user);
+      setUser(data.data.user);
 
       toast.success("Login successful!");
       replace("/dashboard");

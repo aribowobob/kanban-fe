@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { renderHook, act } from "@testing-library/react";
+import { renderHook, act, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { setCookie } from "cookies-next";
@@ -32,22 +32,8 @@ const mockHandleApiError = handleApiError as jest.MockedFunction<
 >;
 
 // Mock user store state
-const mockSetUserDirect = jest.fn();
+const mockSetUser = jest.fn();
 const mockReplace = jest.fn();
-
-// Helper function to wait for async operations
-const waitFor = async (callback: () => void, timeout = 1000) => {
-  const startTime = Date.now();
-  while (Date.now() - startTime < timeout) {
-    try {
-      callback();
-      return;
-    } catch (error) {
-      await new Promise((resolve) => setTimeout(resolve, 10));
-    }
-  }
-  callback(); // Final attempt
-};
 
 // Create wrapper for React Query
 const createWrapper = () => {
@@ -55,9 +41,11 @@ const createWrapper = () => {
     defaultOptions: {
       queries: {
         retry: false,
+        gcTime: 0,
       },
       mutations: {
         retry: false,
+        gcTime: 0,
       },
     },
   });
@@ -79,7 +67,7 @@ describe("useLoginPage", () => {
     } as any);
 
     mockUseUserStore.mockReturnValue({
-      setUserDirect: mockSetUserDirect,
+      setUser: mockSetUser,
     } as any);
 
     mockToast.success = jest.fn();
@@ -130,11 +118,11 @@ describe("useLoginPage", () => {
       password: "password123",
     };
 
-    act(() => {
+    await act(async () => {
       result.current.onSubmit(loginData);
     });
 
-    await waitFor(() => {
+    await waitFor(async () => {
       expect(result.current.loginMutation.isSuccess).toBe(true);
     });
 
@@ -143,7 +131,7 @@ describe("useLoginPage", () => {
       maxAge: 60 * 60 * 24 * 7, // 7 days
       path: "/",
     });
-    expect(mockSetUserDirect).toHaveBeenCalledWith(mockLoginResponse.data.user);
+    expect(mockSetUser).toHaveBeenCalledWith(mockLoginResponse.data.user);
     expect(mockToast.success).toHaveBeenCalledWith("Login successful!");
     expect(mockReplace).toHaveBeenCalledWith("/dashboard");
   });
@@ -163,11 +151,11 @@ describe("useLoginPage", () => {
       password: "wrongpassword",
     };
 
-    act(() => {
+    await act(async () => {
       result.current.onSubmit(loginData);
     });
 
-    await waitFor(() => {
+    await waitFor(async () => {
       expect(result.current.loginMutation.isError).toBe(true);
     });
 
@@ -175,7 +163,7 @@ describe("useLoginPage", () => {
     expect(mockHandleApiError).toHaveBeenCalledWith(mockError);
     expect(mockToast.error).toHaveBeenCalledWith(mockErrorMessage);
     expect(mockSetCookie).not.toHaveBeenCalled();
-    expect(mockSetUserDirect).not.toHaveBeenCalled();
+    expect(mockSetUser).not.toHaveBeenCalled();
     expect(mockReplace).not.toHaveBeenCalled();
   });
 
@@ -239,7 +227,7 @@ describe("useLoginPage", () => {
       password: "password123",
     };
 
-    act(() => {
+    await act(async () => {
       result.current.onSubmit(loginData);
     });
 
@@ -264,7 +252,7 @@ describe("useLoginPage", () => {
       password: "password123",
     };
 
-    act(() => {
+    await act(async () => {
       result.current.onSubmit(loginData);
     });
 
@@ -274,7 +262,7 @@ describe("useLoginPage", () => {
     });
 
     // Resolve the promise
-    act(() => {
+    await act(async () => {
       resolveLogin!({
         status: "success",
         message: "Login successful",
