@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
 import {
   DndContext,
   DragOverlay,
@@ -10,7 +11,8 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
-  closestCorners,
+  closestCenter,
+  DropAnimation,
 } from "@dnd-kit/core";
 import { Task, TaskStatus } from "@/lib/types/task";
 import { useUpdateTaskStatus } from "@/lib/hooks/use-update-task-status";
@@ -27,6 +29,19 @@ const columns: { status: TaskStatus; title: string }[] = [
   { status: "DONE", title: "DONE" },
 ];
 
+const getStatusDisplayName = (status: TaskStatus): string => {
+  switch (status) {
+    case "TO_DO":
+      return "To Do";
+    case "DOING":
+      return "Doing";
+    case "DONE":
+      return "Done";
+    default:
+      return status;
+  }
+};
+
 export default function KanbanBoard({ tasks }: KanbanBoardProps) {
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const updateTaskStatus = useUpdateTaskStatus();
@@ -38,6 +53,11 @@ export default function KanbanBoard({ tasks }: KanbanBoardProps) {
       },
     })
   );
+
+  const dropAnimation: DropAnimation = {
+    duration: 0, // Disable drop animation completely
+    easing: "ease",
+  };
 
   const getTasksByStatus = (status: TaskStatus) => {
     return tasks.filter((task) => task.status === status);
@@ -53,26 +73,44 @@ export default function KanbanBoard({ tasks }: KanbanBoardProps) {
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
-    setActiveTask(null);
 
-    if (!over) return;
+    if (!over) {
+      setActiveTask(null);
+      return;
+    }
 
     const taskId = active.id as number;
     const task = tasks.find((t) => t.id === taskId);
 
-    if (!task) return;
+    if (!task) {
+      setActiveTask(null);
+      return;
+    }
 
     // If dropped over a column
     if (over.data.current?.type === "column") {
       const newStatus = over.id as TaskStatus;
 
       if (task.status !== newStatus) {
+        // Clear active task immediately to prevent double animation
+        setActiveTask(null);
         updateTaskStatus.mutate({
           taskId,
           newStatus,
           task,
         });
+      } else {
+        // Show feedback when trying to drop in the same column
+        setActiveTask(null);
+        toast.info("Task is already in this column", {
+          description: `"${task.name}" is already in ${getStatusDisplayName(
+            task.status
+          )}`,
+          duration: 2000,
+        });
       }
+    } else {
+      setActiveTask(null);
     }
   };
 
@@ -96,12 +134,12 @@ export default function KanbanBoard({ tasks }: KanbanBoardProps) {
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={closestCorners}
+      collisionDetection={closestCenter}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
       onDragOver={handleDragOver}
     >
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
         {columns.map((column) => {
           const columnTasks = getTasksByStatus(column.status);
 
@@ -111,12 +149,13 @@ export default function KanbanBoard({ tasks }: KanbanBoardProps) {
               status={column.status}
               title={column.title}
               tasks={columnTasks}
+              activeTask={activeTask}
             />
           );
         })}
       </div>
 
-      <DragOverlay>
+      <DragOverlay dropAnimation={dropAnimation}>
         {activeTask ? <DraggableTaskCard task={activeTask} /> : null}
       </DragOverlay>
     </DndContext>

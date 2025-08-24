@@ -6,7 +6,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { Task, TeamType } from "@/lib/types/task";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Link as LinkIcon, GripVertical } from "lucide-react";
+import { Link as LinkIcon } from "lucide-react";
 
 interface DraggableTaskCardProps {
   task: Task;
@@ -37,32 +37,32 @@ export default function DraggableTaskCard({ task }: DraggableTaskCardProps) {
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.5 : 1,
+    opacity: isDragging ? 0 : 1, // Completely hide when dragging since we use DragOverlay
+  };
+
+  // Create event handlers that prevent dragging when clicking on links
+  const handleLinkClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
   };
 
   return (
     <Card
       ref={setNodeRef}
       style={style}
-      className={`group shadow-none hover:shadow-sm transition-all duration-200 rounded-lg gap-0 cursor-grab active:cursor-grabbing ${
+      className={`group shadow-none hover:shadow-md transition-all duration-200 rounded-lg gap-0 cursor-grab active:cursor-grabbing ${
         isDragging
-          ? "shadow-lg ring-2 ring-blue-500 rotate-3 scale-105"
-          : "hover:shadow-md"
+          ? "opacity-10 bg-blue-100 border-blue-300"
+          : "hover:shadow-sm hover:bg-gray-50"
       }`}
       {...attributes}
+      {...listeners}
     >
-      <CardHeader className="gap-0 relative">
-        <div
-          className="absolute top-2 right-2 p-1 hover:bg-gray-100 rounded cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity"
-          {...listeners}
-          title="Drag to move task"
-        >
-          <GripVertical className="w-4 h-4 text-gray-400 hover:text-gray-600" />
-        </div>
-        <CardTitle className="text-lg font-bold line-clamp-2 pr-8">
+      <CardHeader className="gap-0">
+        <CardTitle className="text-lg font-bold line-clamp-2">
           <Link
             href={`/dashboard/${task.id}`}
             className="block hover:underline"
+            onClick={handleLinkClick}
           >
             {task.name}
           </Link>
@@ -70,7 +70,11 @@ export default function DraggableTaskCard({ task }: DraggableTaskCardProps) {
       </CardHeader>
       <CardContent className="pt-0 gap-4 flex flex-col">
         {task.description && (
-          <Link href={`/dashboard/${task.id}`} className="block">
+          <Link
+            href={`/dashboard/${task.id}`}
+            className="block"
+            onClick={handleLinkClick}
+          >
             <p className="text-sm text-gray-500 line-clamp-2">
               {task.description}
             </p>
@@ -86,7 +90,8 @@ export default function DraggableTaskCard({ task }: DraggableTaskCardProps) {
                   href={task.external_link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm text-blue-500 hover:underline truncate"
+                  className="text-sm text-blue-500 hover:underline break-all"
+                  onClick={handleLinkClick}
                 >
                   {task.external_link}
                 </Link>
